@@ -3,31 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SuperABC - Transicao Contabil 2026</title>
+    <title>Dashboard Contábil Universal</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="toast-container" class="toast-container"></div>
+    
+    <div id="modal-crud" class="modal-overlay hidden">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h3 id="modal-title">Título</h3>
+                <button onclick="app.closeModal()" class="btn-close">×</button>
+            </div>
+            <div id="modal-body" class="modal-body"></div>
+            <div class="modal-footer">
+                <button onclick="app.closeModal()" class="btn btn-outline">Cancelar</button>
+                <button id="modal-save" onclick="app.saveModal()" class="btn btn-primary">Salvar</button>
+            </div>
+        </div>
+    </div>
 
     <div id="login-screen">
         <div class="modal-overlay" style="background: linear-gradient(135deg, #1e3a5f 0%, #2e5a8c 100%);">
             <div class="modal-content">
-                <div class="modal-logo">A2</div>
-                <div class="modal-title">SuperABC</div>
-                <div class="modal-subtitle">Transicao Contabil 2026<br>Grupo Super ABC | A2Consultores</div>
+                <div class="modal-logo">DC</div>
+                <div class="modal-title">Dashboard Contábil Universal</div>
+                <div class="modal-subtitle">Sistema de Gestão Contábil e Fiscal<br>Gerencie múltiplas empresas em um só lugar</div>
                 <form id="login-form">
                     <div class="form-group">
                         <label class="form-label">E-mail</label>
-                        <input type="email" id="login-email" class="form-input" value="admin@a2consultores.com" required>
+                        <input type="email" id="login-email" class="form-input" placeholder="admin@sistema.com" value="admin@sistema.com" required>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Senha</label>
-                        <input type="password" id="login-password" class="form-input" value="superabc2026" required>
+                        <input type="password" id="login-password" class="form-input" placeholder="••••••" value="admin123" required>
                     </div>
                     <button type="submit" class="btn btn-primary w-full" style="margin-top:8px">Entrar no Sistema</button>
                 </form>
                 <div style="margin-top:16px;font-size:12px;color:var(--text-light)">
-                    <strong>Demo:</strong> admin@a2consultores.com / superabc2026
+                    <strong>Demo:</strong> admin@sistema.com / admin123
                 </div>
             </div>
         </div>
@@ -37,169 +52,219 @@
         <div class="app-container">
             <aside class="sidebar">
                 <div class="sidebar-header">
-                    <div class="sidebar-logo">A2</div>
-                    <div class="sidebar-title">SuperABC</div>
-                    <div class="sidebar-subtitle">Transicao Contabil 2026</div>
+                    <div class="sidebar-logo">DC</div>
+                    <div class="sidebar-title" id="project-name">Dashboard Contábil</div>
+                    <div class="sidebar-subtitle" id="project-client">Universal</div>
                 </div>
+                
+                <div class="sidebar-section">
+                    <div class="sidebar-label">Empresa Ativa</div>
+                    <select id="empresa-select" class="filter-select w-full" onchange="app.changeEmpresa()">
+                        <option value="">Todas as Empresas</option>
+                    </select>
+                </div>
+
                 <nav>
                     <ul class="nav-menu">
                         <li class="nav-item"><a class="nav-link active" data-page="dashboard"><span class="nav-icon">📊</span><span>Dashboard</span></a></li>
-                        <li class="nav-item"><a class="nav-link" data-page="cronograma"><span class="nav-icon">📅</span><span>Cronograma</span></a></li>
-                        <li class="nav-item"><a class="nav-link" data-page="status"><span class="nav-icon">✓</span><span>Controle de Status</span></a></li>
-                        <li class="nav-item"><a class="nav-link" data-page="checklist"><span class="nav-icon">📋</span><span>Checklist</span></a></li>
                         <li class="nav-item"><a class="nav-link" data-page="empresas"><span class="nav-icon">🏢</span><span>Empresas</span></a></li>
-                        <li class="nav-item"><a class="nav-link" data-page="guia"><span class="nav-icon">📖</span><span>Guia A2Consultores</span></a></li>
-                        <li class="nav-item"><a class="nav-link" data-page="contatos"><span class="nav-icon">🔗</span><span>Contatos e Links</span></a></li>
+                        <li class="nav-item"><a class="nav-link" data-page="tarefas"><span class="nav-icon">📋</span><span>Tarefas</span></a></li>
+                        <li class="nav-item"><a class="nav-link" data-page="cronograma"><span class="nav-icon">📅</span><span>Cronograma</span></a></li>
+                        <li class="nav-item"><a class="nav-link" data-page="checklist"><span class="nav-icon">✓</span><span>Checklist</span></a></li>
+                        <li class="nav-item"><a class="nav-link" data-page="equipe"><span class="nav-icon">👥</span><span>Equipe</span></a></li>
+                        <li class="nav-item"><a class="nav-link" data-page="config"><span class="nav-icon">⚙️</span><span>Configurações</span></a></li>
                     </ul>
                 </nav>
+                
                 <div class="sidebar-footer">
-                    <div style="margin-bottom:8px"><span id="user-name" style="font-weight:600">Usuario</span></div>
-                    <button onclick="app.toggleTheme()" class="btn btn-sm btn-outline" style="margin-bottom:8px">🌓 Tema</button>
-                    <button onclick="app.logout()" class="btn btn-sm btn-outline">🚪 Sair</button>
-                    <div style="margin-top:12px;opacity:0.6">A2Consultores<br>(11) 96482-2296</div>
+                    <div style="margin-bottom:8px"><span id="user-name" style="font-weight:600">Usuário</span></div>
+                    <button onclick="app.toggleTheme()" class="btn btn-sm btn-outline" style="margin-bottom:8px;width:100%">🌓 Tema</button>
+                    <button onclick="app.exportarExcel()" class="btn btn-sm btn-success" style="margin-bottom:8px;width:100%">📥 Exportar Excel</button>
+                    <button onclick="app.logout()" class="btn btn-sm btn-outline" style="width:100%">🚪 Sair</button>
                 </div>
             </aside>
 
             <main class="main-content">
-                <!-- DASHBOARD -->
                 <div id="page-dashboard" class="page-content">
                     <div class="top-header">
                         <div>
                             <h1 class="page-title">Dashboard</h1>
-                            <p class="page-subtitle">Visao geral da Transicao Contabil</p>
+                            <p class="page-subtitle" id="dash-subtitle">Visão geral do projeto</p>
                         </div>
-                        <button onclick="app.exportToExcel()" class="btn btn-success">📥 Exportar Excel</button>
+                        <div class="header-actions">
+                            <button onclick="app.openModal('projeto')" class="btn btn-outline">✏️ Editar Projeto</button>
+                            <button onclick="app.exportarExcel()" class="btn btn-success">📥 Exportar Excel</button>
+                        </div>
                     </div>
+                    
                     <div class="card-grid">
-                        <div class="card">
+                        <div class="card clickable" onclick="app.navigateTo('empresas')">
                             <div class="card-header">
-                                <div><div class="card-title">Total de Tarefas</div><div class="card-value" id="dash-total-tarefas">32</div></div>
-                                <div class="card-icon blue">📋</div>
+                                <div><div class="card-title">Empresas</div><div class="card-value" id="dash-total-empresas">0</div></div>
+                                <div class="card-icon blue">🏢</div>
                             </div>
+                            <div class="card-footer">Clique para gerenciar</div>
                         </div>
-                        <div class="card">
+                        <div class="card clickable" onclick="app.navigateTo('tarefas')">
                             <div class="card-header">
-                                <div><div class="card-title">Concluidas</div><div class="card-value" id="dash-concluidas" style="color:var(--accent-green)">0</div></div>
+                                <div><div class="card-title">Total de Tarefas</div><div class="card-value" id="dash-total-tarefas">0</div></div>
+                                <div class="card-icon purple">📋</div>
+                            </div>
+                            <div class="card-footer">Clique para visualizar</div>
+                        </div>
+                        <div class="card clickable" onclick="app.navigateTo('tarefas')">
+                            <div class="card-header">
+                                <div><div class="card-title">Concluídas</div><div class="card-value" id="dash-concluidas" style="color:var(--accent-green)">0</div></div>
                                 <div class="card-icon green">✓</div>
                             </div>
+                            <div class="card-footer" id="dash-taxa-conclusao">0% concluído</div>
                         </div>
-                        <div class="card">
+                        <div class="card clickable" onclick="app.navigateTo('checklist')">
                             <div class="card-header">
-                                <div><div class="card-title">Em Andamento</div><div class="card-value" id="dash-andamento" style="color:var(--accent-orange)">0</div></div>
-                                <div class="card-icon orange">⏳</div>
+                                <div><div class="card-title">Checklist</div><div class="card-value" id="dash-checklist">0/0</div></div>
+                                <div class="card-icon orange">📑</div>
                             </div>
-                        </div>
-                        <div class="card">
-                            <div class="card-header">
-                                <div><div class="card-title">Pendentes</div><div class="card-value" id="dash-pendentes" style="color:var(--accent-red)">32</div></div>
-                                <div class="card-icon purple">⏸</div>
-                            </div>
+                            <div class="card-footer" id="dash-checklist-pct">0% entregue</div>
                         </div>
                     </div>
+
                     <div class="card" style="margin-bottom:24px">
                         <div class="card-header">
-                            <div><div class="card-title" style="font-size:16px">Progresso Geral</div><div style="font-size:32px;font-weight:700;color:var(--primary-dark)"><span id="dash-progresso-geral">0%</span></div></div>
+                            <div><div class="card-title" style="font-size:16px">Progresso Geral do Projeto</div><div style="font-size:32px;font-weight:700;color:var(--primary-dark)"><span id="dash-progresso-geral">0%</span></div></div>
                             <div class="card-icon gold">📈</div>
                         </div>
-                        <div class="progress-container"><div class="progress-bar"><div class="progress-fill blue" id="dash-progresso-bar" style="width:0%"></div></div></div>
+                        <div class="progress-container">
+                            <div class="progress-bar">
+                                <div class="progress-fill blue" id="dash-progresso-bar" style="width:0%"></div>
+                            </div>
+                        </div>
+                        <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:13px;color:var(--text-medium)">
+                            <span id="dash-periodo">Período: -</span>
+                            <span id="dash-duracao">Duração: -</span>
+                        </div>
                     </div>
-                    <div class="card-grid" style="grid-template-columns:repeat(3,1fr)">
-                        <div class="chart-container"><div class="chart-title">📘 Folha de Pagamento</div><div id="chart-folha"></div></div>
-                        <div class="chart-container"><div class="chart-title">📗 Contabil</div><div id="chart-contabil"></div></div>
-                        <div class="chart-container"><div class="chart-title">📙 Fiscal</div><div id="chart-fiscal"></div></div>
+
+                    <div class="card-grid" style="grid-template-columns:repeat(auto-fit, minmax(300px, 1fr))">
+                        <div class="chart-container">
+                            <div class="chart-title">📊 Progresso por Departamento</div>
+                            <div id="chart-departamentos"></div>
+                        </div>
+                        <div class="chart-container">
+                            <div class="chart-title">🏢 Progresso por Empresa</div>
+                            <div id="chart-empresas"></div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- CRONOGRAMA -->
-                <div id="page-cronograma" class="page-content hidden">
-                    <div class="top-header">
-                        <div><h1 class="page-title">Cronograma Interativo</h1></div>
-                        <select id="filter-dept" class="filter-select">
-                            <option value="all">Todos</option>
-                            <option value="Folha de Pagamento">Folha</option>
-                            <option value="Informacoes Contabeis">Contabil</option>
-                            <option value="Informacoes Fiscais">Fiscal</option>
-                        </select>
-                    </div>
-                    <div class="table-container">
-                        <table class="data-table">
-                            <thead><tr><th>Nº</th><th>Tarefa</th><th>Resp</th><th>Inicio</th><th>Fim</th><th>Dias</th><th>%</th><th>Status</th><th>Obs</th></tr></thead>
-                            <tbody id="cronograma-body"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- STATUS -->
-                <div id="page-status" class="page-content hidden">
-                    <div class="top-header">
-                        <div><h1 class="page-title">Controle de Status</h1></div>
-                        <select id="filter-status" class="filter-select">
-                            <option value="all">Todos</option>
-                            <option value="pendente">Pendente</option>
-                            <option value="andamento">Em Andamento</option>
-                            <option value="concluido">Concluido</option>
-                        </select>
-                    </div>
-                    <div class="table-container">
-                        <table class="data-table">
-                            <thead><tr><th>Nº</th><th>Tarefa</th><th>Prioridade</th><th>Resp</th><th>Inicio</th><th>Fim</th><th>%</th><th>Status</th><th>Obs</th></tr></thead>
-                            <tbody id="status-body"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- CHECKLIST -->
-                <div id="page-checklist" class="page-content hidden">
-                    <div class="top-header">
-                        <div><h1 class="page-title">Checklist de Documentos</h1><p id="checklist-stats">0/32 entregues</p></div>
-                        <select id="filter-check" class="filter-select">
-                            <option value="all">Todas</option>
-                            <option value="FOLHA DE PAGAMENTO">Folha</option>
-                            <option value="CONTABIL">Contabil</option>
-                            <option value="FISCAL">Fiscal</option>
-                        </select>
-                    </div>
-                    <div class="table-container">
-                        <table class="data-table">
-                            <thead><tr><th>Categoria</th><th>Documento</th><th>Empresa</th><th>Entregue</th><th>Data</th><th>Resp</th></tr></thead>
-                            <tbody id="checklist-body"></tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- EMPRESAS -->
                 <div id="page-empresas" class="page-content hidden">
-                    <div class="top-header"><div><h1 class="page-title">Relacao de Empresas</h1></div></div>
+                    <div class="top-header">
+                        <div><h1 class="page-title">Gestão de Empresas</h1></div>
+                        <button onclick="app.openModal('empresa')" class="btn btn-primary">+ Nova Empresa</button>
+                    </div>
                     <div class="table-container">
                         <table class="data-table">
-                            <thead><tr><th>#</th><th>Empresa</th><th>CNPJ</th><th>UF</th><th>Func.</th><th>Status</th></tr></thead>
+                            <thead>
+                                <tr><th>ID</th><th>Razão Social</th><th>CNPJ</th><th>Estado</th><th>Funcionários</th><th>Status</th><th>Ações</th></tr>
+                            </thead>
                             <tbody id="empresas-body"></tbody>
                         </table>
                     </div>
                 </div>
 
-                <!-- GUIA -->
-                <div id="page-guia" class="page-content hidden">
-                    <div class="top-header"><div><h1 class="page-title">Guia A2Consultores</h1></div></div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
-                        <div><h2 style="font-size:18px;color:var(--primary-dark);margin-bottom:16px">👥 Equipe</h2><div id="guia-equipe"></div></div>
-                        <div><h2 style="font-size:18px;color:var(--primary-dark);margin-bottom:16px">⏰ Prazos</h2><div id="guia-prazos"></div></div>
+                <div id="page-tarefas" class="page-content hidden">
+                    <div class="top-header">
+                        <div>
+                            <h1 class="page-title">Gestão de Tarefas</h1>
+                            <p class="page-subtitle" id="tarefas-subtitle">Todas as empresas</p>
+                        </div>
+                        <button onclick="app.openModal('tarefa')" class="btn btn-primary">+ Nova Tarefa</button>
+                    </div>
+                    <div class="table-filters" style="margin-bottom:16px">
+                        <select id="filter-empresa-tarefa" class="filter-select" onchange="app.renderTarefas()">
+                            <option value="">Todas as Empresas</option>
+                        </select>
+                        <select id="filter-dept-tarefa" class="filter-select" onchange="app.renderTarefas()">
+                            <option value="">Todos Departamentos</option>
+                            <option value="Folha de Pagamento">Folha de Pagamento</option>
+                            <option value="Contábil">Contábil</option>
+                            <option value="Fiscal">Fiscal</option>
+                            <option value="Financeiro">Financeiro</option>
+                            <option value="Legal">Legal</option>
+                            <option value="Outros">Outros</option>
+                        </select>
+                        <select id="filter-status-tarefa" class="filter-select" onchange="app.renderTarefas()">
+                            <option value="">Todos Status</option>
+                            <option value="PENDENTE">Pendente</option>
+                            <option value="EM ANDAMENTO">Em Andamento</option>
+                            <option value="CONCLUÍDO">Concluído</option>
+                        </select>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr><th>Código</th><th>Tarefa</th><th>Empresa</th><th>Depto</th><th>Responsável</th><th>Início</th><th>Fim</th><th>Progresso</th><th>Status</th><th>Ações</th></tr>
+                            </thead>
+                            <tbody id="tarefas-body"></tbody>
+                        </table>
                     </div>
                 </div>
 
-                <!-- CONTATOS -->
-                <div id="page-contatos" class="page-content hidden">
-                    <div class="top-header"><div><h1 class="page-title">Contatos e Links</h1></div></div>
-                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px">
-                        <div><h2 style="font-size:18px;color:var(--primary-dark);margin-bottom:16px">🔗 Sistemas</h2><div id="contatos-links"></div></div>
-                        <div><h2 style="font-size:18px;color:var(--primary-dark);margin-bottom:16px">📞 Equipe</h2><div id="contatos-equipe"></div></div>
+                <div id="page-cronograma" class="page-content hidden">
+                    <div class="top-header"><div><h1 class="page-title">Cronograma Visual</h1></div></div>
+                    <div class="timeline-container" id="cronograma-timeline"></div>
+                </div>
+
+                <div id="page-checklist" class="page-content hidden">
+                    <div class="top-header">
+                        <div>
+                            <h1 class="page-title">Checklist de Documentos</h1>
+                            <p class="page-subtitle" id="checklist-subtitle">Controle de entregas</p>
+                        </div>
+                        <button onclick="app.openModal('checklist-item')" class="btn btn-primary">+ Novo Item</button>
+                    </div>
+                    <div class="table-filters" style="margin-bottom:16px">
+                        <select id="filter-empresa-check" class="filter-select" onchange="app.renderChecklist()">
+                            <option value="">Todas as Empresas</option>
+                        </select>
+                        <select id="filter-cat-check" class="filter-select" onchange="app.renderChecklist()">
+                            <option value="">Todas Categorias</option>
+                            <option value="FOLHA">Folha de Pagamento</option>
+                            <option value="CONTÁBIL">Contábil</option>
+                            <option value="FISCAL">Fiscal</option>
+                            <option value="TRABALHISTA">Trabalhista</option>
+                            <option value="SOCIETÁRIO">Societário</option>
+                            <option value="OUTROS">Outros</option>
+                        </select>
+                    </div>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr><th width="40"></th><th>Categoria</th><th>Documento</th><th>Empresa</th><th>Data Entrega</th><th>Responsável</th><th>Observações</th><th>Ações</th></tr>
+                            </thead>
+                            <tbody id="checklist-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div id="page-equipe" class="page-content hidden">
+                    <div class="top-header"><div><h1 class="page-title">Equipe do Projeto</h1></div></div>
+                    <div class="card-grid" id="equipe-grid" style="grid-template-columns:repeat(auto-fill, minmax(300px, 1fr))"></div>
+                </div>
+
+                <div id="page-config" class="page-content hidden">
+                    <div class="top-header"><div><h1 class="page-title">Configurações do Projeto</h1></div></div>
+                    <div class="card-grid" style="grid-template-columns:1fr">
+                        <div class="card">
+                            <h3 style="margin-bottom:16px;color:var(--primary-dark)">⚠️ Zona de Perigo</h3>
+                            <button onclick="app.resetarDados()" class="btn btn-danger">🗑️ Resetar Todos os Dados</button>
+                            <p style="margin-top:8px;font-size:13px;color:var(--text-light)">Esta ação irá apagar todos os dados e restaurar o estado inicial.</p>
+                        </div>
                     </div>
                 </div>
             </main>
         </div>
     </div>
 
-    <script src="data.js"></script>
     <script src="app.js"></script>
 </body>
 </html>
